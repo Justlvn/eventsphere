@@ -1,0 +1,10 @@
+# Fichier minimal pour le déploiement des fonctions (ajustez si vous utilisez `supabase link`).
+
+# Désactivé : la passerelle refusait parfois des JWT valides (401, execution_id null).
+# La fonction vérifie toujours l’utilisateur avec `auth.getUser()` + règles métier.
+[functions.notify-on-event]
+verify_jwt = false
+
+# Secret dédié : Authorization: Bearer <EVENT_REMINDERS_CRON_SECRET>
+[functions.event-reminders]
+verify_jwt = false
