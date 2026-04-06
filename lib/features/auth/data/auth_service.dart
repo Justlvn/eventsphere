@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../../../core/validation/devinci_email.dart';
 import '../../../models/app_user.dart';
 
@@ -56,6 +57,34 @@ class AuthService {
   /// Déconnecte l'utilisateur courant.
   Future<void> signOut() async {
     await _client.auth.signOut();
+  }
+
+  /// Supprime définitivement le compte via l’Edge Function [delete-account]
+  /// (admin API côté serveur, clé jamais exposée dans l’app).
+  Future<void> deleteAccount() async {
+    try {
+      await PushNotificationService.instance.unregisterDeviceToken();
+    } catch (_) {}
+    if (_client.auth.currentSession == null) {
+      throw Exception('Non connecté');
+    }
+    try {
+      await _client.functions.invoke('delete-account');
+    } on FunctionException catch (e) {
+      final d = e.details;
+      var msg = 'Suppression impossible';
+      if (d is Map && d['error'] != null) {
+        msg = d['error'].toString();
+      } else if (d is String && d.isNotEmpty) {
+        msg = d;
+      } else {
+        msg = '$msg (${e.status})';
+      }
+      throw Exception(msg);
+    }
+    try {
+      await _client.auth.signOut();
+    } catch (_) {}
   }
 
   /// Récupère le profil de l'utilisateur connecté depuis public.users.

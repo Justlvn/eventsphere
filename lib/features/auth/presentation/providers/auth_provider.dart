@@ -92,6 +92,27 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Supprime le compte côté Supabase. En cas de succès, l’appelant doit ensuite
+  /// appeler [clearSessionAfterAccountDeletion] (ex. après le dialogue de confirmation).
+  Future<bool> deleteAccount() async {
+    try {
+      await _authService.deleteAccount();
+      return true;
+    } catch (e) {
+      _errorMessage = _extractMessage(e);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// À appeler après [deleteAccount] réussi et la fermeture du dialogue utilisateur.
+  void clearSessionAfterAccountDeletion() {
+    _user = null;
+    _status = AuthStatus.unauthenticated;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
   /// Recharge le profil depuis `public.users` (ex. après changement de rôle par un admin).
   Future<void> refreshProfile() async {
     try {

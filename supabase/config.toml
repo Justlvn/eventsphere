@@ -8,3 +8,7 @@ verify_jwt = false
 # Secret dédié : Authorization: Bearer <EVENT_REMINDERS_CRON_SECRET>
 [functions.event-reminders]
 verify_jwt = false
+
+# JWT utilisateur vérifié dans la fonction (getUser + admin.deleteUser).
+[functions.delete-account]
+verify_jwt = false

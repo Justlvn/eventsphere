@@ -296,6 +296,14 @@ class _ProfileContent extends StatelessWidget {
         AppSettingsGroup(
           children: [
             AppSettingsTile(
+              icon: Icons.delete_forever_outlined,
+              iconColor: Theme.of(context).colorScheme.error,
+              title: 'Supprimer le compte',
+              onTap: () => _showDeleteAccountFlow(context),
+              isDestructive: true,
+              showChevron: false,
+            ),
+            AppSettingsTile(
               icon: Icons.logout,
               iconColor: Theme.of(context).colorScheme.error,
               title: 'Se déconnecter',
@@ -783,6 +791,82 @@ class _PillBadge extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+Future<void> _showDeleteAccountFlow(BuildContext context) async {
+  final cs = Theme.of(context).colorScheme;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Supprimer le compte ?'),
+      content: const Text(
+        'Êtes-vous sûr ? Cela est irréversible.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('Annuler'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: cs.error,
+            foregroundColor: cs.onError,
+          ),
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: const Text('Oui'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true || !context.mounted) return;
+
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(
+      child: CircularProgressIndicator(),
+    ),
+  );
+
+  final auth = context.read<AuthProvider>();
+  final ok = await auth.deleteAccount();
+
+  if (context.mounted) {
+    Navigator.of(context, rootNavigator: true).pop();
+  }
+
+  if (!context.mounted) return;
+
+  if (!ok) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          auth.errorMessage ?? 'Impossible de supprimer le compte.',
+        ),
+        backgroundColor: cs.error,
+      ),
+    );
+    return;
+  }
+
+  await showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => AlertDialog(
+      content: const Text('Compte bien supprimé'),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('OK'),
+        ),
+      ],
+    ),
+  );
+
+  if (context.mounted) {
+    auth.clearSessionAfterAccountDeletion();
   }
 }
 

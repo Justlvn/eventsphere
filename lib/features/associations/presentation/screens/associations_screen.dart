@@ -139,29 +139,34 @@ class _AssociationsColoredHeader extends StatelessWidget {
               ],
             ),
           ),
-          if (canCreate)
-            FilledButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const AssociationFormScreen(),
+          if (canCreate) ...[
+            const SizedBox(width: 12),
+            // Row + FilledButton sans flex : largeur max infinie (surtout web) → layout cassé.
+            IntrinsicWidth(
+              child: FilledButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const AssociationFormScreen(),
+                  ),
                 ),
-              ),
-              icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text('Créer'),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: AppColors.primary,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                icon: const Icon(Icons.add_rounded, size: 20),
+                label: const Text('Créer'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.primary,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
