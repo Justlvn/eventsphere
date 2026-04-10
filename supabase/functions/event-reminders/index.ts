@@ -15,6 +15,12 @@ const corsHeaders: Record<string, string> = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+/** Associations BDE / BDS — responsables = équivalent admin (aligné notify-on-event + RPC). */
+const BDE_BDS_ASSOCIATION_IDS = [
+  "11d89d91-e233-480e-8e9d-48acf0675922",
+  "133610da-6a34-4b0b-a1bf-8b9dc9ce7919",
+] as const;
+
 type EventRow = {
   id: string;
   title: string;
@@ -90,22 +96,35 @@ async function recipientUserIdsForVisible(
 
   if (vis === "restricted") {
     if (!aid) {
-      const { data, error } = await supabase.from("users").select("id").eq(
-        "role",
-        "admin",
-      );
-      if (error) throw error;
-      return (data ?? []).map((r: { id: string }) => r.id);
+      const { data: admins, error: e1 } = await supabase.from("users").select(
+        "id",
+      ).eq("role", "admin");
+      if (e1) throw e1;
+      const { data: bdeBds, error: e2 } = await supabase.from("memberships")
+        .select("user_id")
+        .eq("role", "responsible")
+        .in("association_id", [...BDE_BDS_ASSOCIATION_IDS]);
+      if (e2) throw e2;
+      const set = new Set<string>();
+      for (const a of admins ?? []) set.add(a.id);
+      for (const r of bdeBds ?? []) set.add(r.user_id);
+      return [...set];
     }
     const { data: admins, error: e1 } = await supabase.from("users").select(
       "id",
     ).eq("role", "admin");
     if (e1) throw e1;
+    const { data: bdeBds, error: e1b } = await supabase.from("memberships")
+      .select("user_id")
+      .eq("role", "responsible")
+      .in("association_id", [...BDE_BDS_ASSOCIATION_IDS]);
+    if (e1b) throw e1b;
     const { data: members, error: e2 } = await supabase.from("memberships")
       .select("user_id").eq("association_id", aid);
     if (e2) throw e2;
     const set = new Set<string>();
     for (const a of admins ?? []) set.add(a.id);
+    for (const r of bdeBds ?? []) set.add(r.user_id);
     for (const m of members ?? []) set.add(m.user_id);
     return [...set];
   }

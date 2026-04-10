@@ -1,3 +1,4 @@
+import '../constants/bde_bds_association_ids.dart';
 import '../../models/app_user.dart';
 import '../../models/enums.dart';
 import '../../models/event.dart';
@@ -26,7 +27,20 @@ class PermissionService {
   // ─── Rôle global ────────────────────────────────────────────────────────────
 
   bool get isAuthenticated => _user != null;
-  bool get isAdmin => _user?.isAdmin ?? false;
+
+  /// Admin en base (`public.users.role = admin`).
+  bool get isDbAdmin => _user?.isAdmin ?? false;
+
+  /// Responsable de l’association BDE ou BDS (mêmes pouvoirs qu’un admin).
+  bool get isBdeOrBdsResponsible => _memberships.any(
+        (m) =>
+            m.role == AssociationRole.responsible &&
+            (m.associationId == BdeBdsAssociationIds.bde ||
+                m.associationId == BdeBdsAssociationIds.bds),
+      );
+
+  /// Admin global **ou** responsable BDE/BDS (équivalent admin pour l’app).
+  bool get isAdmin => isDbAdmin || isBdeOrBdsResponsible;
 
   /// Vrai si l'utilisateur est responsable d'au moins une association.
   bool get isResponsibleAnywhere =>
@@ -91,8 +105,8 @@ class PermissionService {
   /// Admin ou responsable de l'association organisatrice.
   bool canDeleteEvent(String? associationId) => canCreateEvent(associationId);
 
-  /// Seuls les **admins** peuvent créer ou passer un événement en **public**.
-  /// Les responsables d'association ne peuvent publier qu'en restreint ou privé.
+  /// Admins globaux et responsables BDE/BDS peuvent créer ou passer un événement en **public**.
+  /// Les autres responsables d’association : restreint ou privé uniquement.
   bool get canPublishEventAsPublic => isAdmin;
 
   /// Voir le **nombre** de participants (pas les noms) — admin ou responsable de l’asso organisatrice.
